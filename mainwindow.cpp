@@ -1,5 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "zip.h"
+
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -125,19 +127,39 @@ void MainWindow::on_btnComChose_clicked()
 //压缩页 压缩到按钮：选择压缩文件放置路径
 void MainWindow::on_btnComAim_clicked()
 {
-    //定义文件对话类框
+//    //定义文件对话类框
+//    QFileDialog *fileDialog = new QFileDialog(this);
+//    //定义文件对话框标题
+//    //fileDialog->setWindowTitle("Please Select filter");
+//    //设置默认文件路径
+//    //fileDialog->setDirectory(".");
+//    //设置视图模式
+//    fileDialog->setViewMode(QFileDialog::Detail);
+//    //文本框显示选择的文件路径
+//    QString filenames;
+//    filenames = fileDialog->getExistingDirectory(this,"Please Select Directory","C:");
+//    ui->leComAim->setText(filenames);
+//    //qDebug()<<tmp<<endl;
+
+//定义文件对话类框
     QFileDialog *fileDialog = new QFileDialog(this);
     //定义文件对话框标题
-    //fileDialog->setWindowTitle("Please Select filter");
+    fileDialog->setWindowTitle("Please Select one file");
     //设置默认文件路径
-    //fileDialog->setDirectory(".");
+    fileDialog->setDirectory(".");
     //设置视图模式
     fileDialog->setViewMode(QFileDialog::Detail);
     //文本框显示选择的文件路径
-    QString filenames;
-    filenames = fileDialog->getExistingDirectory(this,"Please Select Directory","C:");
-    ui->leComAim->setText(filenames);
-    //qDebug()<<tmp<<endl;
+    QStringList filenames;
+    if(fileDialog->exec())
+    {
+        filenames = fileDialog->selectedFiles();
+    }
+    for(auto tmp:filenames)
+    {
+        ui->leComAim->setText(tmp);
+        //qDebug()<<tmp<<endl;
+    }
 }
 
 //解压页 选择文件按钮
