@@ -1,7 +1,5 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "zip.h"
-
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -140,12 +138,7 @@ void MainWindow::on_btnComAim_clicked()
 //    filenames = fileDialog->getExistingDirectory(this,"Please Select Directory","C:");
 //    ui->leComAim->setText(filenames);
 //    //qDebug()<<tmp<<endl;
-<<<<<<< HEAD
-
-//定义文件对话类框
-=======
     //定义文件对话类框
->>>>>>> 99fdd2a092498a4ee200e5493de58fe0c7f50787
     QFileDialog *fileDialog = new QFileDialog(this);
     //定义文件对话框标题
     fileDialog->setWindowTitle("Please Select one file");
@@ -160,13 +153,6 @@ void MainWindow::on_btnComAim_clicked()
     {
         filenames = fileDialog->selectedFiles();
     }
-<<<<<<< HEAD
-    for(auto tmp:filenames)
-    {
-        ui->leComAim->setText(tmp);
-        //qDebug()<<tmp<<endl;
-    }
-=======
     QString names;
     QString renames="djin";
     for(auto tmp:filenames)
@@ -187,7 +173,6 @@ void MainWindow::on_btnComAim_clicked()
     names.append(".hzip");
     if(names.length()==5) ui->leComAim->setText("");
     else ui->leComAim->setText(names);
->>>>>>> 99fdd2a092498a4ee200e5493de58fe0c7f50787
 }
 
 //解压页 选择文件按钮
