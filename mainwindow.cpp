@@ -125,19 +125,54 @@ void MainWindow::on_btnComChose_clicked()
 //压缩页 压缩到按钮：选择压缩文件放置路径
 void MainWindow::on_btnComAim_clicked()
 {
+//    //定义文件对话类框
+//    QFileDialog *fileDialog = new QFileDialog(this);
+//    //定义文件对话框标题
+//    //fileDialog->setWindowTitle("Please Select filter");
+//    //设置默认文件路径
+//    //fileDialog->setDirectory(".");
+//    //设置视图模式
+//    fileDialog->setViewMode(QFileDialog::Detail);
+//    //文本框显示选择的文件路径
+//    QString filenames;
+//    filenames = fileDialog->getExistingDirectory(this,"Please Select Directory","C:");
+//    ui->leComAim->setText(filenames);
+//    //qDebug()<<tmp<<endl;
     //定义文件对话类框
     QFileDialog *fileDialog = new QFileDialog(this);
     //定义文件对话框标题
-    //fileDialog->setWindowTitle("Please Select filter");
+    fileDialog->setWindowTitle("Please Select one file");
     //设置默认文件路径
-    //fileDialog->setDirectory(".");
+    fileDialog->setDirectory(".");
     //设置视图模式
     fileDialog->setViewMode(QFileDialog::Detail);
+    fileDialog->setNameFilter("None");
     //文本框显示选择的文件路径
-    QString filenames;
-    filenames = fileDialog->getExistingDirectory(this,"Please Select Directory","C:");
-    ui->leComAim->setText(filenames);
-    //qDebug()<<tmp<<endl;
+    QStringList filenames;
+    if(fileDialog->exec())
+    {
+        filenames = fileDialog->selectedFiles();
+    }
+    QString names;
+    QString renames="djin";
+    for(auto tmp:filenames)
+    {
+        names.append(tmp);
+        //ui->leComAim->setText(tmp);
+        //qDebug()<<tmp<<endl;
+    }
+    int flag=0;
+    for(int i=0; i<names.length();i++)
+    {
+        if(names[i]=='.') flag=i;
+    }
+    if(flag!=0)
+    {
+        names = names.remove(flag,names.length()-flag);
+    }
+    names.append(".hzip");
+    if(names.length()==5) ui->leComAim->setText("");
+    else ui->leComAim->setText(names);
 }
 
 //解压页 选择文件按钮
@@ -150,7 +185,7 @@ void MainWindow::on_btnUnChose_clicked()
     //设置默认文件路径
     fileDialog->setDirectory(".");
     //设置文件过滤器
-    fileDialog->setNameFilter("All Files(*.zip)");
+    fileDialog->setNameFilter("All Files(*.hzip)");
     //设置视图模式
     fileDialog->setViewMode(QFileDialog::Detail);
     //文本框显示选择的文件路径
@@ -159,11 +194,13 @@ void MainWindow::on_btnUnChose_clicked()
     {
         filenames = fileDialog->selectedFiles();
     }
+
     for(auto tmp:filenames)
     {
         ui->leUnChose->setText(tmp);
         //qDebug()<<tmp<<endl;
     }
+
 }
 
 //解压页 解压到按钮

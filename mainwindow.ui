@@ -51,7 +51,7 @@
      <string notr="true"/>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>2</number>
     </property>
     <widget class="QWidget" name="start">
      <property name="styleSheet">
@@ -231,7 +231,7 @@
        </rect>
       </property>
       <property name="text">
-       <string>压缩到</string>
+       <string>解压到</string>
       </property>
      </widget>
      <widget class="QLineEdit" name="leUnChose">
