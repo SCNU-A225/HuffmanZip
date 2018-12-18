@@ -1,12 +1,13 @@
 #include "zip.h"
 #include <iostream>
-#include <cstdio>
+#include <stdio.h>
 #include <fstream>
 #include <huffmantree.h>
 #include <string.h>
 #include <map>
 #include <deque>
 #include <QDebug>
+#include <windows.h>
 
 ZIP::ZIP()
 {
@@ -21,8 +22,11 @@ char* dstPath: 压缩到的文件路径
 */
 void ZIP::encode(const char* srcPath, const char* dstPath)
 {
-    FILE *fin = fopen(srcPath, "rb");//被压文件
-    FILE *fout = fopen(dstPath, "wb");//压缩后的文件
+    wchar_t wSrcPath[2048],wdstPath[2048];
+    UTF8ToUnicode(srcPath, wSrcPath);
+    UTF8ToUnicode(dstPath, wdstPath);
+    FILE *fin = _wfopen(wSrcPath,L"rb");//被压文件
+    FILE *fout = _wfopen(wdstPath, L"wb");//压缩后的文件
     if(!fin)
     {
         qDebug()<<"压缩失败！不能打开被压文件！"<<endl;
@@ -35,11 +39,11 @@ void ZIP::encode(const char* srcPath, const char* dstPath)
     }
 
     char* fileName = getFileName(srcPath);//获取文件名
-    int fileNameLen;//文件名长度
-    if((fileNameLen=strlen(fileName)) >= 256)
+    int fileNameLen = strlen(fileName);//文件名长度
+    if(fileNameLen >= 256)
     {
         qDebug()<<"压缩失败！文件【"<<fileName<<"】文件名过长！"<<endl;
-        return;
+        throw runtime_error("源文件文件名过长！");
     }
 
     fputc(fileNameLen,fout);//将文件名长度写入压缩文件中
@@ -57,7 +61,6 @@ void ZIP::encode(const char* srcPath, const char* dstPath)
 
     //将权值数组写入压缩文件中
     fwrite(&weights, sizeof(weights[0]), 256, fout);
-    //delete[] &weights;
 
     {//压缩文件数据
         map<int,string> codeTable = tree.getCodeTable();//获取编码表
@@ -113,8 +116,11 @@ char* fileNam: 文件名
 */
 void ZIP::decode(const char* zipPath, const char* dstPath)
 {
-    FILE *fin = fopen(zipPath, "rb");//打开压缩文件
-    FILE *fout = fopen(dstPath, "wb");//打开解压文件
+    wchar_t wZipPath[2048],wdstPath[2048];
+    UTF8ToUnicode(zipPath, wZipPath);
+    UTF8ToUnicode(dstPath, wdstPath);
+    FILE *fin = _wfopen(wZipPath,L"rb");//被压文件
+    FILE *fout = _wfopen(wdstPath, L"wb");//压缩后的文件
 
     if(!fin)
     {
@@ -124,6 +130,7 @@ void ZIP::decode(const char* zipPath, const char* dstPath)
     else if(!fout)
     {
         qDebug()<<"解压失败！不能打开目标解压文件！"<<endl;
+        fclose(fin);
         throw runtime_error("不能打开目标解压文件！\n请检查命名以及解压到路径！");
     }
     else if(!checkZip(fin)){
@@ -217,7 +224,9 @@ return: char* 原文件名
 */
 char *ZIP::getZipFileName(const char* path)
 {
-    FILE *fin = fopen(path, "rb");//打开压缩文件
+    wchar_t wPath[2048];
+    UTF8ToUnicode(path, wPath);
+    FILE *fin = _wfopen(wPath, L"rb");//打开压缩文件
     if(!checkZip(fin)) throw runtime_error("压缩文件可能损坏");
     int fileNameLen = fgetc(fin);//获取文件名长度
     char* fileName = new char[fileNameLen+2];//用于储存文件名
@@ -239,8 +248,31 @@ bool ZIP::checkZip(FILE *f)
     if(t<0 || t>8) return false;
     fseek(f,0,SEEK_SET);
     t = fgetc(f);
-    if(t >= 256) return false;
+    if(t<=0||t>=256) return false;
 
     fseek(f,0,SEEK_SET);//将文件指针重置
     return true;
+}
+
+/*
+工具函数，转换字符
+char *UTF8: uft8字符串
+wchar_t *strUnicode: 存储wchar的数组
+return: 是否成功
+*/
+bool ZIP::UTF8ToUnicode(const char *UTF8, wchar_t *strUnicode)
+{
+     DWORD dwUnicodeLen;    //转换后Unicode的长度
+     TCHAR*pwText;      //保存Unicode的指针
+     //获得转换后的长度，并分配内存
+     dwUnicodeLen = MultiByteToWideChar(CP_UTF8,0,UTF8,-1,NULL,0);
+     pwText = new TCHAR[dwUnicodeLen];
+     if(!pwText) return false;
+     //转为Unicode
+     MultiByteToWideChar(CP_UTF8,0,UTF8,-1,pwText,dwUnicodeLen);
+     //转为CString
+     wcscpy(strUnicode, pwText);
+     //清除内存
+     delete[]pwText;
+     return true;
 }

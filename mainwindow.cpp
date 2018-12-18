@@ -197,15 +197,18 @@ void MainWindow::on_btnUnAim_clicked()
 //压缩页 确定按钮
 void MainWindow::on_btnComsure_clicked()
 {
-    if(ui->leComAim->text().isEmpty() || ui->leComChose->text().isEmpty())
+    QString aim = ui->leComAim->text();
+    QString chose = ui->leComChose->text();
+    if(aim.isEmpty() || chose.isEmpty())
     {
         QMessageBox::warning(this,"压缩失败","请完整填写参数！");
         return;
     }
 
     //todo: 进度条
-    const char* srcPath = ui->leComChose->text().toStdString().c_str();//源文件
-    const char* dstPath = ui->leComAim->text().toStdString().c_str();//目标文件路径
+    const char* srcPath = chose.toStdString().c_str();//源文件
+    const char* dstPath = aim.toStdString().c_str();//目标文件路径
+
     try {
         ZIP::encode(srcPath, dstPath);
     } catch(std::runtime_error er) {
