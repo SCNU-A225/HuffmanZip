@@ -111,22 +111,11 @@ char* zipPath: 压缩文件路径
 char* dstDir: 解压的目标文件夹
 char* fileNam: 文件名
 */
-void ZIP::decode(const char* zipPath, const char* dstDir, const char* fileName)
+void ZIP::decode(const char* zipPath, const char* dstPath)
 {
     FILE *fin = fopen(zipPath, "rb");//打开压缩文件
-
-    int fileNameLen = fgetc(fin);//获取文件名长度
-    char* dstPath= new char[strlen(dstDir)+strlen(fileName)+1];//解压路径
-    fseek(fin,fileNameLen,SEEK_CUR);
-    memset(dstPath,0,sizeof(dstPath));//路径清空
-    //生成解压路径
-    strcat(dstPath,dstDir);
-    strcat(dstPath,fileName);
-
-    //todo: 替换提醒
     FILE *fout = fopen(dstPath, "wb");//打开解压文件
 
-    //todo: 路径合法性检测
     if(!fin)
     {
         qDebug()<<"解压失败！不能打开压缩文件！"<<endl;
@@ -137,6 +126,13 @@ void ZIP::decode(const char* zipPath, const char* dstDir, const char* fileName)
         qDebug()<<"解压失败！不能打开目标解压文件！"<<endl;
         throw runtime_error("不能打开目标解压文件！\n请检查命名以及解压到路径！");
     }
+    else if(!checkZip(fin)){
+        qDebug()<<"解压失败！压缩文件有误！"<<endl;
+        throw runtime_error("压缩文件有误！\n可能压缩文件有损坏！");
+    }
+
+    int fileNameLen = fgetc(fin);//获取文件名长度
+    fseek(fin,fileNameLen,SEEK_CUR);//跳过文件名存储部分
 
     //重新读取权值数组，重建哈夫曼树
     int weights[256];
@@ -187,9 +183,6 @@ void ZIP::decode(const char* zipPath, const char* dstDir, const char* fileName)
     //关闭文件
     fclose(fin);
     fclose(fout);
-
-    //释放内存
-    delete[] dstPath;
 }
 
 /*
@@ -225,10 +218,29 @@ return: char* 原文件名
 char *ZIP::getZipFileName(const char* path)
 {
     FILE *fin = fopen(path, "rb");//打开压缩文件
+    if(!checkZip(fin)) throw runtime_error("压缩文件可能损坏");
     int fileNameLen = fgetc(fin);//获取文件名长度
     char* fileName = new char[fileNameLen+2];//用于储存文件名
     fgets(fileName,fileNameLen+1,fin);//获取被压文件名
     if(ferror(fin)) throw runtime_error("文件读取失败");
     fclose(fin);
     return fileName;
+}
+
+/*
+检查压缩文件是否有效
+FILE *f: 压缩文件
+return: 若有效返回true，否则false
+*/
+bool ZIP::checkZip(FILE *f)
+{
+    fseek(f,-1,SEEK_END);
+    int t = fgetc(f);
+    if(t<0 || t>8) return false;
+    fseek(f,0,SEEK_SET);
+    t = fgetc(f);
+    if(t >= 256) return false;
+
+    fseek(f,0,SEEK_SET);//将文件指针重置
+    return true;
 }

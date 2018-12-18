@@ -177,7 +177,12 @@ void MainWindow::on_btnUnChose_clicked()
         ui->leUnChose->setText(filename);
         ui->leUnAim->setText(fileDialog->directory().absolutePath());
         const char* path = filename.toStdString().c_str();
-        ui->leUnname->setText(QString(ZIP::getZipFileName(path)));
+        try {
+            ui->leUnname->setText(QString(ZIP::getZipFileName(path)));
+        } catch (std::runtime_error er) {
+            qDebug()<<er.what();
+            QMessageBox::warning(this,"错误",er.what());
+        }
     }
 }
 
@@ -216,22 +221,41 @@ void MainWindow::on_btnComsure_clicked()
 //解压页 确定按钮
 void MainWindow::on_btnUnSure_clicked()
 {
-    if(ui->leUnAim->text().isEmpty() || ui->leUnChose->text().isEmpty() || ui->leUnname->text().isEmpty())
+    //获取文本
+    QString aim = ui->leUnAim->text();//解压到文件夹
+    QString chose = ui->leUnChose->text();//压缩文件路径
+    QString name = ui->leUnname->text();//解压后的文件名
+    QString path;//解压后的路径
+
+    if(aim.isEmpty() || chose.isEmpty() || name.isEmpty())
     {
         QMessageBox::warning(this,"解压失败","请完整填写参数！");
         return;
     }
 
     //todo: 进度条
-    const char* dstDir;//目标文件夹
-    if(ui->leUnAim->text().endsWith("/")||ui->leUnAim->text().endsWith("\\"))
-        dstDir=ui->leUnAim->text().toStdString().c_str();
-    else
-        dstDir=ui->leUnAim->text().append("/").toStdString().c_str();
-    const char* zipPath = ui->leUnChose->text().toStdString().c_str();//压缩文件路径
-    const char* fileName = ui->leUnname->text().toStdString().c_str();//解压文件名
+
+    //添加路径分割符'/'
+    if(aim.endsWith("/")||aim.endsWith("\\")) path=aim.append(name);
+    else path=aim.append("/").append(name);
+
+    QFileInfo zip(chose),unzip(path);
+    if(!zip.isFile())
+    {
+        QMessageBox::warning(this,"解压失败","压缩文件不存在！");
+        return;
+    }
+    else if(unzip.isFile())
+    {
+        QMessageBox message(QMessageBox::NoIcon, "提示", "文件已经存在，是否替换?", QMessageBox::Yes | QMessageBox::No, NULL);
+        if(message.exec() == QMessageBox::No) return;
+    }
+
+    const char* zipPath = chose.toStdString().c_str();//压缩文件路径
+    const char* dstPath = path.toStdString().c_str();;//目标文件夹
+
     try{
-        ZIP::decode(zipPath,dstDir,fileName);
+        ZIP::decode(zipPath,dstPath);
     } catch(std::runtime_error er) {
         qDebug()<<er.what();
         QMessageBox::warning(this,"解压失败",er.what());
