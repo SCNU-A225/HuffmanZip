@@ -117,6 +117,16 @@ void MainWindow::on_btnComChose_clicked()
     {
         QString fileName = fileDialog->selectedFiles().first();
         ui->leComChose->setText(fileName);
+        int flag = 0;
+        for(int i=fileName.length(); i>0; i--)
+            if(fileName[i]=='.')
+            {
+                flag = i;
+                break;
+            }
+        fileName.remove(flag,fileName.length()-flag);
+        fileName.append(".hzip");
+        ui->leComAim->setText(fileName);
     }
 }
 
@@ -131,31 +141,17 @@ void MainWindow::on_btnComAim_clicked()
     fileDialog->setViewMode(QFileDialog::Detail);
     fileDialog->setNameFilter("压缩文件(*.hzip)");
     //文本框显示选择的文件路径
-    QStringList filenames;
-    if(fileDialog->exec())
+    QString filenames;
+    if(fileDialog->exec()==QFileDialog::Accepted)
     {
-        filenames = fileDialog->selectedFiles();
+        filenames = fileDialog->selectedFiles().first();
+        if(!filenames.endsWith(".hzip"))
+        {
+            filenames.append(".hzip");
+        }
+        ui->leComAim->setText(filenames);
     }
-    QString names;
-    QString renames="djin";
-    for(auto tmp:filenames)
-    {
-        names.append(tmp);
-        //ui->leComAim->setText(tmp);
-        //qDebug()<<tmp<<endl;
-    }
-    int flag=0;
-    for(int i=0; i<names.length();i++)
-    {
-        if(names[i]=='.') flag=i;
-    }
-    if(flag!=0)
-    {
-        names = names.remove(flag,names.length()-flag);
-    }
-    names.append(".hzip");
-    if(names.length()==5) ui->leComAim->setText("");
-    else ui->leComAim->setText(names);
+
 }
 
 //解压页 选择文件按钮
