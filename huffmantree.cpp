@@ -38,6 +38,7 @@ HuffmanTree::HuffmanTree(int weights[])
 合并哈夫曼树
 Node *tree1: 左树指针
 Node *tree2: 右树指针
+return: Node* 合并后的哈夫曼树根节点地址
 */
 Node* HuffmanTree::mergeTree(Node *tree1, Node *tree2)
 {
@@ -49,7 +50,11 @@ Node* HuffmanTree::mergeTree(Node *tree1, Node *tree2)
     return parent;
 }
 
-//生成哈夫曼编码表
+/*
+生成哈夫曼编码表
+Node *root: 当前节点指针
+string code: 当前节点编码
+*/
 void HuffmanTree::makeCodeTable(Node *root, string code)
 {
     if(root==nullptr) return;

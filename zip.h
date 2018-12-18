@@ -9,9 +9,10 @@ ZIP
 class ZIP
 {
 public:
-    static void encode(char* srcPath, char* dstPath);//压缩
-    static void decode(char* zipPath);//解压
-    static char* getFileName(char* path);//获取文件名
+    static void encode(const char* srcPath, const char* dstPath);//压缩
+    static void decode(const char* zipPath, const char *dstDir, const char* fileName);//解压
+    static char* getFileName(const char* path);//分离出文件名
+    static char* getZipFileName(const char* path);//获取源文件名
 private:
     ZIP();
 };
