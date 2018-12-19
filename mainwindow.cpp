@@ -229,8 +229,8 @@ void MainWindow::on_btnComsure_clicked()
     progress->setFixedSize(QSize(300,50));
     progress->setWindowTitle("进度");
     progress->setLabelText("正在压缩......");
-    progress->setValue(0);
     progress->show();
+    progress->setValue(0);
     progress->setStyleSheet("QProgressBar{border: 1px solid grey;border-radius: 5px;text-align: center;}"
                               "QProgressBar::chunk{background-color: #CD96CD;width: 10px;margin: 0.5px;}");
 
@@ -238,13 +238,20 @@ void MainWindow::on_btnComsure_clicked()
     std::string tb = aim.toStdString();
     const char* srcPath = ta.c_str();//源文件
     const char* dstPath = tb.c_str();//目标文件路径
+
+    clock_t startTime,endTime;
+    startTime = clock();
     try {
         ZIP::encode(srcPath, dstPath,progress);
     } catch(std::runtime_error er) {
         qDebug()<<er.what();
-        QMessageBox::warning(this,"解压失败",er.what());
+        QMessageBox::warning(this,"压缩失败",er.what());
     }
+    endTime = clock();
+    double time = double(endTime - startTime) / CLOCKS_PER_SEC;
+    qDebug()<<time;
     progress->close();
+    QMessageBox::information(this,"提示",QString("压缩成功！耗时：%1s").arg(time));
 }
 
 //解压页 确定按钮
@@ -293,17 +300,23 @@ void MainWindow::on_btnUnSure_clicked()
     progress->setFixedSize(QSize(300,50));
     progress->setWindowTitle("进度");
     progress->setLabelText("正在解压......");
-    progress->setValue(0);
     progress->show();
+    progress->setValue(0);
     progress->setStyleSheet("QProgressBar{border: 1px solid grey;border-radius: 5px;text-align: center;}"
                               "QProgressBar::chunk{background-color: #CD96CD;width: 10px;margin: 0.5px;}");
 
+    clock_t startTime,endTime;
+    startTime = clock();
     try{
         ZIP::decode(zipPath,dstPath,progress);
     } catch(std::runtime_error er) {
         qDebug()<<er.what();
         QMessageBox::warning(this,"解压失败",er.what());
     }
+    endTime = clock();
+    double time = double(endTime - startTime) / CLOCKS_PER_SEC;
+    qDebug()<<time;
     progress->close();
+    QMessageBox::information(this,"提示",QString("解压成功！耗时：%1s").arg(time));
 
 }

@@ -10,6 +10,7 @@
 #include <windows.h>
 #include <QProgressDialog>
 #include <QCoreApplication>
+#include <ctime>
 
 ZIP::ZIP()
 {
@@ -22,16 +23,13 @@ ZIP::ZIP()
 char* srcPath: 被压缩的文件路径
 char* dstPath: 压缩到的文件路径
 */
-void ZIP::encode(const char* srcPath, const char* dstPath, QProgressDialog* progress=NULL)
+void ZIP::encode(const char* srcPath, const char* dstPath, QProgressDialog* progress)
 {
-    progress->setValue(0);
     wchar_t wSrcPath[2048],wdstPath[2048];
     if(!UTF8ToUnicode(srcPath, wSrcPath) || !UTF8ToUnicode(dstPath, wdstPath))
         throw runtime_error("路径转换字符集失败！");
     FILE *fin = _wfopen(wSrcPath,L"rb");//被压文件
     FILE *fout = _wfopen(wdstPath, L"wb");//压缩后的文件
-    //进度条
-    long long circleTimes = 0;
 
     if(!fin)
     {
@@ -43,6 +41,16 @@ void ZIP::encode(const char* srcPath, const char* dstPath, QProgressDialog* prog
         qDebug()<<"压缩失败！不能打开目标文件！"<<endl;
         throw runtime_error("不能打开目标文件！\n请检查压缩到路径");
     }
+
+    //进度条
+    fpos_t fileLen;//文件大小（字节）
+    _fseeki64(fin,0,SEEK_END);
+    fgetpos(fin, &fileLen);
+    _fseeki64(fin,0,SEEK_SET);
+    int steps = 0;//进度条计数器
+    long long each = fileLen/50+1;
+    register long long circleTimes = 0;
+    progress->setRange(0,100);//设置进度条
 
     char* fileName = getFileName(srcPath);//获取文件名
     int fileNameLen = strlen(fileName);//文件名长度
@@ -59,40 +67,38 @@ void ZIP::encode(const char* srcPath, const char* dstPath, QProgressDialog* prog
     int c,weights[256];
     memset(weights,0,sizeof(weights));
     while (true) {
-        //Machinec
-        circleTimes++;
-        QCoreApplication::processEvents();
-        //Machinec
         c = fgetc(fin);
         if(feof(fin)) break;
+        if((++circleTimes&65535)==65535)
+            QCoreApplication::processEvents();
+        if(circleTimes==each)
+        {
+            QCoreApplication::processEvents();
+            circleTimes = 0;
+            progress->setValue(++steps);
+        }
         weights[c]++;
     }
     HuffmanTree tree(weights);
 
-    //Machinec
-    int rangeMax = circleTimes/1000;
-    progress->setRange(0,rangeMax);
-    int judgeTimes = (rangeMax/100)*98;
     circleTimes = 0;
-    int tempTimes = 0;
-    //Machinec
-
     //将权值数组写入压缩文件中
     fwrite(&weights, sizeof(weights[0]), 256, fout);
 
     {//压缩文件数据
         map<int,string> codeTable = tree.getCodeTable();//获取编码表
-        fseek(fin,0,SEEK_SET);//重新开始读取被压文件
+        _fseeki64(fin,0,SEEK_SET);//重新开始读取被压文件
         string codes = "";//待压缩的二进制数据，用string临时存储
-        int len = 0;//用于存储codes长度
+        register int len = 0;//用于存储codes长度
         while (true) {
             c = fgetc(fin);
             if(feof(fin)) break;//文件结束 退出
             codes += codeTable[c];//通过编码表获得编码
-            while((len=codes.length())>=8)//每满8个二进制位就存储一次
+            len = codes.length();
+            while(len>=8)//每满8个二进制位就存储一次
             {
                 //将二进制转为0-255之间的数字
-                int temp = 0;
+                register int temp = 0;
                 for(int i=0;i<8;i++)
                 {
                     temp<<=1;
@@ -100,18 +106,16 @@ void ZIP::encode(const char* srcPath, const char* dstPath, QProgressDialog* prog
                 }
                 //字符串缩短
                 codes = codes.substr(8,len-8);
+                len -= 8;
                 //将压缩后的数据写入
                 fputc(temp,fout);
             }
-            //Machinec
-            circleTimes++;
-            tempTimes = circleTimes/1000;
-            if(tempTimes<=judgeTimes)
+            if(++circleTimes==each)
             {
                 QCoreApplication::processEvents();
-                progress->setValue(tempTimes);
+                circleTimes = 0;
+                progress->setValue(++steps);
             }
-            //Machinec
         }
         //写入最后不满8位的数据，用0补齐
         int temp = 0;
@@ -125,15 +129,13 @@ void ZIP::encode(const char* srcPath, const char* dstPath, QProgressDialog* prog
         fputc(temp,fout);
         //写入最后剩余的位数
         fputc(len,fout);
-
-        //Machinec
-        for(int t=judgeTimes; t<rangeMax; t++) progress->setValue(t);
-        //Machinec
     }
 
     //关闭文件
     fclose(fin);
     fclose(fout);
+
+    for(; steps<=100; steps++) progress->setValue(steps);
 
     //释放内存
     delete[] fileName;
@@ -149,6 +151,7 @@ char* fileNam: 文件名
 */
 void ZIP::decode(const char* zipPath, const char* dstPath, QProgressDialog* progress)
 {
+
     const int buffByteSize = 20480;
 
     wchar_t wZipPath[2048],wdstPath[2048];
@@ -159,7 +162,6 @@ void ZIP::decode(const char* zipPath, const char* dstPath, QProgressDialog* prog
 
     if(!fin)
     {
-
         qDebug()<<"解压失败！不能打开压缩文件！"<<endl;
         throw runtime_error("不能打开压缩文件！\n请检查压缩文件路径！");
     }
@@ -178,7 +180,7 @@ void ZIP::decode(const char* zipPath, const char* dstPath, QProgressDialog* prog
     _fseeki64(fin,0,SEEK_END);
     fgetpos(fin, &fileLen);
     _fseeki64(fin,0,SEEK_SET);
-    int steps = 0;//进度条计数器
+    register int steps = 0;//进度条计数器
     int circleTimes = fileLen*8/buffByteSize+1;//循环次数
     progress->setRange(0,circleTimes);//设置进度条
 
@@ -203,9 +205,10 @@ void ZIP::decode(const char* zipPath, const char* dstPath, QProgressDialog* prog
         {
             c = codeQueue.front();//出队
             codeQueue.pop_front();
-            if(c=='0' && now->lchild) now=now->lchild;
-            else if(c=='1' && now->rchild) now=now->rchild;
-            if(now->lchild==nullptr && now->rchild==nullptr)
+            if(c=='0') now=now->lchild;
+            else if(c=='1') now=now->rchild;
+            if(now==nullptr) throw runtime_error("哈夫曼树解码失败！");
+            if(now->data!=-1)
             {
                 //todo: 数据正确性判断
                 fputc(now->data,fout);//找到叶子节点，存入对应数据
@@ -292,14 +295,14 @@ return: 若有效返回true，否则false
 */
 bool ZIP::checkZip(FILE *f)
 {
-    fseek(f,-1,SEEK_END);
+    _fseeki64(f,-1,SEEK_END);
     int t = fgetc(f);
     if(t<0 || t>8) return false;
-    fseek(f,0,SEEK_SET);
+    _fseeki64(f,0,SEEK_SET);
     t = fgetc(f);
     if(t<=0||t>=256) return false;
 
-    fseek(f,0,SEEK_SET);//将文件指针重置
+    _fseeki64(f,0,SEEK_SET);//将文件指针重置
     return true;
 }
 
