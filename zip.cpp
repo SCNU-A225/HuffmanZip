@@ -22,13 +22,16 @@ ZIP::ZIP()
 char* srcPath: 被压缩的文件路径
 char* dstPath: 压缩到的文件路径
 */
-void ZIP::encode(const char* srcPath, const char* dstPath)
+void ZIP::encode(const char* srcPath, const char* dstPath, QProgressDialog* progress=NULL)
 {
+    progress->setValue(0);
     wchar_t wSrcPath[2048],wdstPath[2048];
     if(!UTF8ToUnicode(srcPath, wSrcPath) || !UTF8ToUnicode(dstPath, wdstPath))
         throw runtime_error("路径转换字符集失败！");
     FILE *fin = _wfopen(wSrcPath,L"rb");//被压文件
     FILE *fout = _wfopen(wdstPath, L"wb");//压缩后的文件
+    //进度条
+    long long circleTimes = 0;
 
     if(!fin)
     {
@@ -56,11 +59,23 @@ void ZIP::encode(const char* srcPath, const char* dstPath)
     int c,weights[256];
     memset(weights,0,sizeof(weights));
     while (true) {
+        //Machinec
+        circleTimes++;
+        QCoreApplication::processEvents();
+        //Machinec
         c = fgetc(fin);
         if(feof(fin)) break;
         weights[c]++;
     }
     HuffmanTree tree(weights);
+
+    //Machinec
+    int rangeMax = circleTimes/1000;
+    progress->setRange(0,rangeMax);
+    int judgeTimes = (rangeMax/100)*98;
+    circleTimes = 0;
+    int tempTimes = 0;
+    //Machinec
 
     //将权值数组写入压缩文件中
     fwrite(&weights, sizeof(weights[0]), 256, fout);
@@ -88,6 +103,15 @@ void ZIP::encode(const char* srcPath, const char* dstPath)
                 //将压缩后的数据写入
                 fputc(temp,fout);
             }
+            //Machinec
+            circleTimes++;
+            tempTimes = circleTimes/1000;
+            if(tempTimes<=judgeTimes)
+            {
+                QCoreApplication::processEvents();
+                progress->setValue(tempTimes);
+            }
+            //Machinec
         }
         //写入最后不满8位的数据，用0补齐
         int temp = 0;
@@ -101,6 +125,10 @@ void ZIP::encode(const char* srcPath, const char* dstPath)
         fputc(temp,fout);
         //写入最后剩余的位数
         fputc(len,fout);
+
+        //Machinec
+        for(int t=judgeTimes; t<rangeMax; t++) progress->setValue(t);
+        //Machinec
     }
 
     //关闭文件
