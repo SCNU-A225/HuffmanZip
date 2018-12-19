@@ -119,7 +119,7 @@ char* zipPath: 压缩文件路径
 char* dstDir: 解压的目标文件夹
 char* fileNam: 文件名
 */
-void ZIP::decode(const char* zipPath, const char* dstPath, QProgressDialog* progress=NULL)
+void ZIP::decode(const char* zipPath, const char* dstPath, QProgressDialog* progress)
 {
     const int buffByteSize = 20480;
 
@@ -173,7 +173,7 @@ void ZIP::decode(const char* zipPath, const char* dstPath, QProgressDialog* prog
     {
         while(codeQueue.size()!=0)//当序列不为空，不断走哈夫曼树解码
         {
-            c = codeQueue.front();
+            c = codeQueue.front();//出队
             codeQueue.pop_front();
             if(c=='0' && now->lchild) now=now->lchild;
             else if(c=='1' && now->rchild) now=now->rchild;
