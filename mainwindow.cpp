@@ -4,6 +4,10 @@
 #include <cstring>
 #include <string.h>
 #include <QMessageBox>
+#include <QProgressDialog>
+#include <thread>
+
+QProgressDialog* progress;
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -270,10 +274,21 @@ void MainWindow::on_btnUnSure_clicked()
     const char* zipPath = ta.c_str();//压缩文件路径
     const char* dstPath = tb.c_str();;//目标文件夹
 
+    progress = new QProgressDialog(this);;
+    progress->setCancelButton(nullptr);
+    progress->setModal(true);
+    progress->setFixedSize(QSize(300,50));
+    progress->setWindowTitle("进度");
+    progress->setLabelText("正在解压......");
+    progress->setValue(0);
+    progress->show();
+
     try{
-        ZIP::decode(zipPath,dstPath);
+        ZIP::decode(zipPath,dstPath,progress);
     } catch(std::runtime_error er) {
         qDebug()<<er.what();
         QMessageBox::warning(this,"解压失败",er.what());
     }
+    progress->close();
+
 }

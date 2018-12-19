@@ -9,7 +9,7 @@
 #include <QDebug>
 #include <windows.h>
 #include <QProgressDialog>
-
+#include <QCoreApplication>
 
 ZIP::ZIP()
 {
@@ -119,15 +119,9 @@ char* zipPath: 压缩文件路径
 char* dstDir: 解压的目标文件夹
 char* fileNam: 文件名
 */
-void ZIP::decode(const char* zipPath, const char* dstPath)
+void ZIP::decode(const char* zipPath, const char* dstPath, QProgressDialog* progress=NULL)
 {
-//    //Machinec
-    int steps = 0;
-    QProgressDialog* progress = new QProgressDialog();
-    progress->setRange(0,100);
-    progress->setValue(steps);
-    progress->show();
-//    //Machinec
+    const int buffByteSize = 20480;
 
     wchar_t wZipPath[2048],wdstPath[2048];
     if(!UTF8ToUnicode(zipPath, wZipPath) || !UTF8ToUnicode(dstPath, wdstPath))
@@ -152,8 +146,16 @@ void ZIP::decode(const char* zipPath, const char* dstPath)
         throw runtime_error("压缩文件有误！\n可能压缩文件有损坏！");
     }
 
+    fpos_t fileLen;//文件大小（字节）
+    _fseeki64(fin,0,SEEK_END);
+    fgetpos(fin, &fileLen);
+    _fseeki64(fin,0,SEEK_SET);
+    int steps = 0;//进度条计数器
+    int circleTimes = fileLen*8/buffByteSize+1;//循环次数
+    progress->setRange(0,circleTimes);//设置进度条
+
     int fileNameLen = fgetc(fin);//获取文件名长度
-    fseek(fin,fileNameLen,SEEK_CUR);//跳过文件名存储部分
+    _fseeki64(fin,fileNameLen,SEEK_CUR);//跳过文件名存储部分
 
     //重新读取权值数组，重建哈夫曼树
     int weights[256];
@@ -169,10 +171,6 @@ void ZIP::decode(const char* zipPath, const char* dstPath)
     map<int,string> codeTable = tree.getCodeTable();//获取编码表
     while(true)//解码
     {
-        //Machinec
-        if(steps<=95) progress->setValue(++steps);
-        //Machinec
-
         while(codeQueue.size()!=0)//当序列不为空，不断走哈夫曼树解码
         {
             c = codeQueue.front();
@@ -186,7 +184,7 @@ void ZIP::decode(const char* zipPath, const char* dstPath)
                 now = root;
             }
         }
-        while(!feof(fin) && codeQueue.size()<=2048)//获取数据，规定每次获取上限减少内存使用
+        while(!feof(fin) && codeQueue.size()<=buffByteSize)//获取数据，规定每次获取上限减少内存使用
         {
             c1 = c2;
             c2 = fgetc(fin);
@@ -202,14 +200,11 @@ void ZIP::decode(const char* zipPath, const char* dstPath)
                 else codeQueue.push_back('0');
             }
         }
+        QCoreApplication::processEvents();
+        progress->setValue(++steps);
+
         if(feof(fin)&&codeQueue.size()==0) break;//处理结束
     }
-
-    //Machinec
-    while(steps<100) progress->setValue(++steps);
-    progress->close();
-    delete progress;
-    //Machinec
 
     //关闭文件
     fclose(fin);
