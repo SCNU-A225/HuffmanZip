@@ -110,7 +110,9 @@ void ZIP::encode(const char* srcPath, const char* dstPath, QProgressDialog* prog
                 //将压缩后的数据写入
                 fputc(temp,fout);
             }
-            if(++circleTimes==each)
+            if((++circleTimes&65535)==65535)
+                QCoreApplication::processEvents();
+            if(circleTimes==each)
             {
                 QCoreApplication::processEvents();
                 circleTimes = 0;
@@ -198,7 +200,6 @@ void ZIP::decode(const char* zipPath, const char* dstPath, QProgressDialog* prog
     char c;//用于临时存储序列数据
     HuffmanTreeNode *root,*now;//root为哈夫曼树根节点地址，now为工作地址
     root = now = tree.getRoot();
-    map<int,string> codeTable = tree.getCodeTable();//获取编码表
     while(true)//解码
     {
         while(codeQueue.size()!=0)//当序列不为空，不断走哈夫曼树解码
