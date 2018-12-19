@@ -8,7 +8,7 @@ int weights[]: 权值数组
 */
 HuffmanTree::HuffmanTree(int weights[])
 {
-    Node **treeNodes = new Node *[256];//用于保存对应为0-255的字符的节点信息
+    Node **treeNodes = new Node *[256];//用于保存字符节点信息
     priority_queue<Node,vector<Node>,greater<Node> > pq;//使用优先队列维护节点的权值排列
     for (int i=0,cnt=0;i<256;i++)//生成出现过的哈夫曼节点
     {
@@ -19,8 +19,8 @@ HuffmanTree::HuffmanTree(int weights[])
     //数据检查
     if(pq.size()<=0)
     {
-        qDebug()<<"节点生成有误";
-        return;
+        qDebug()<<"哈夫曼节点生成有误！请重试！";
+        throw runtime_error("节点生成有误");
     }
 
     Node tnode1,tnode2;//用于临时存储最小两个节点的信息

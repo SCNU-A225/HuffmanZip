@@ -205,10 +205,22 @@ void MainWindow::on_btnComsure_clicked()
         return;
     }
 
+    //判断文件情况
+    QFileInfo unzip(chose),zip(aim);
+    if(!unzip.isFile())
+    {
+        QMessageBox::warning(this,"压缩失败","选择文件不存在！");
+        return;
+    }
+    else if(zip.isFile())
+    {
+        QMessageBox message(QMessageBox::NoIcon, "提示", "文件已经存在，是否替换?", QMessageBox::Yes | QMessageBox::No, NULL);
+        if(message.exec() == QMessageBox::No) return;
+    }
+
     //todo: 进度条
     const char* srcPath = chose.toStdString().c_str();//源文件
     const char* dstPath = aim.toStdString().c_str();//目标文件路径
-
     try {
         ZIP::encode(srcPath, dstPath);
     } catch(std::runtime_error er) {
@@ -238,6 +250,7 @@ void MainWindow::on_btnUnSure_clicked()
     if(aim.endsWith("/")||aim.endsWith("\\")) path=aim.append(name);
     else path=aim.append("/").append(name);
 
+    //判断文件情况
     QFileInfo zip(chose),unzip(path);
     if(!zip.isFile())
     {

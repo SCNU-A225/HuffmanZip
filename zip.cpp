@@ -9,6 +9,7 @@
 #include <QDebug>
 #include <windows.h>
 
+
 ZIP::ZIP()
 {
 
@@ -23,10 +24,11 @@ char* dstPath: 压缩到的文件路径
 void ZIP::encode(const char* srcPath, const char* dstPath)
 {
     wchar_t wSrcPath[2048],wdstPath[2048];
-    UTF8ToUnicode(srcPath, wSrcPath);
-    UTF8ToUnicode(dstPath, wdstPath);
+    if(!UTF8ToUnicode(srcPath, wSrcPath) || !UTF8ToUnicode(dstPath, wdstPath))
+        throw runtime_error("路径转换字符集失败！");
     FILE *fin = _wfopen(wSrcPath,L"rb");//被压文件
     FILE *fout = _wfopen(wdstPath, L"wb");//压缩后的文件
+
     if(!fin)
     {
         qDebug()<<"压缩失败！不能打开被压文件！"<<endl;
@@ -106,6 +108,8 @@ void ZIP::encode(const char* srcPath, const char* dstPath)
 
     //释放内存
     delete[] fileName;
+
+    return;
 }
 
 /*
@@ -117,8 +121,8 @@ char* fileNam: 文件名
 void ZIP::decode(const char* zipPath, const char* dstPath)
 {
     wchar_t wZipPath[2048],wdstPath[2048];
-    UTF8ToUnicode(zipPath, wZipPath);
-    UTF8ToUnicode(dstPath, wdstPath);
+    if(!UTF8ToUnicode(zipPath, wZipPath) || !UTF8ToUnicode(dstPath, wdstPath))
+        throw runtime_error("路径转换字符集失败！");
     FILE *fin = _wfopen(wZipPath,L"rb");//被压文件
     FILE *fout = _wfopen(wdstPath, L"wb");//压缩后的文件
 
@@ -168,7 +172,7 @@ void ZIP::decode(const char* zipPath, const char* dstPath)
                 now = root;
             }
         }
-        while(!feof(fin) && codeQueue.size()<=128)//获取数据，规定每次获取上限减少内存使用
+        while(!feof(fin) && codeQueue.size()<=2048)//获取数据，规定每次获取上限减少内存使用
         {
             c1 = c2;
             c2 = fgetc(fin);
@@ -190,6 +194,8 @@ void ZIP::decode(const char* zipPath, const char* dstPath)
     //关闭文件
     fclose(fin);
     fclose(fout);
+
+    return;
 }
 
 /*
