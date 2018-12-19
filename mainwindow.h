@@ -11,6 +11,10 @@
 #include <QBrush>
 #include <QGraphicsDropShadowEffect>
 #include <QColor>
+#include <QDialog>
+#include <QProgressBar>
+#include <QProgressDialog>
+#include <QTimer>
 
 namespace Ui {
 class MainWindow;

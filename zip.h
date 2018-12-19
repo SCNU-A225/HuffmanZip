@@ -1,6 +1,10 @@
 #ifndef ZIP_H
 #define ZIP_H
 #include <fstream>
+//********
+#include <QProgressDialog>
+#include <QTimer>
+//********
 /*
 ZIP
 压缩工具类

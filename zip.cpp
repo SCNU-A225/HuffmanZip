@@ -116,6 +116,14 @@ char* fileNam: 文件名
 */
 void ZIP::decode(const char* zipPath, const char* dstPath)
 {
+    //******
+    QProgressDialog *progress = new QProgressDialog();
+    int steps = 0;
+    progress->setRange(0,100);
+    progress->setCancelButton(NULL);
+    progress->setValue(steps);
+    progress->show();
+    //******
     wchar_t wZipPath[2048],wdstPath[2048];
     UTF8ToUnicode(zipPath, wZipPath);
     UTF8ToUnicode(dstPath, wdstPath);
@@ -155,6 +163,9 @@ void ZIP::decode(const char* zipPath, const char* dstPath)
     map<int,string> codeTable = tree.getCodeTable();//获取编码表
     while(true)//解码
     {
+        //****
+        if(steps<=95) progress->setValue(++steps);
+        //****
         while(codeQueue.size()!=0)//当序列不为空，不断走哈夫曼树解码
         {
             c = codeQueue.front();
@@ -186,6 +197,10 @@ void ZIP::decode(const char* zipPath, const char* dstPath)
         }
         if(feof(fin)&&codeQueue.size()==0) break;//处理结束
     }
+    //****
+    for(;steps<=100;steps++) progress->setValue(steps);
+    progress->close();
+    //****
 
     //关闭文件
     fclose(fin);
