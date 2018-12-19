@@ -8,6 +8,7 @@
 #include <deque>
 #include <QDebug>
 #include <windows.h>
+#include <QProgressDialog>
 
 
 ZIP::ZIP()
@@ -120,6 +121,14 @@ char* fileNam: 文件名
 */
 void ZIP::decode(const char* zipPath, const char* dstPath)
 {
+//    //Machinec
+    int steps = 0;
+    QProgressDialog* progress = new QProgressDialog();
+    progress->setRange(0,100);
+    progress->setValue(steps);
+    progress->show();
+//    //Machinec
+
     wchar_t wZipPath[2048],wdstPath[2048];
     if(!UTF8ToUnicode(zipPath, wZipPath) || !UTF8ToUnicode(dstPath, wdstPath))
         throw runtime_error("路径转换字符集失败！");
@@ -128,6 +137,7 @@ void ZIP::decode(const char* zipPath, const char* dstPath)
 
     if(!fin)
     {
+
         qDebug()<<"解压失败！不能打开压缩文件！"<<endl;
         throw runtime_error("不能打开压缩文件！\n请检查压缩文件路径！");
     }
@@ -159,6 +169,10 @@ void ZIP::decode(const char* zipPath, const char* dstPath)
     map<int,string> codeTable = tree.getCodeTable();//获取编码表
     while(true)//解码
     {
+        //Machinec
+        if(steps<=95) progress->setValue(++steps);
+        //Machinec
+
         while(codeQueue.size()!=0)//当序列不为空，不断走哈夫曼树解码
         {
             c = codeQueue.front();
@@ -190,6 +204,12 @@ void ZIP::decode(const char* zipPath, const char* dstPath)
         }
         if(feof(fin)&&codeQueue.size()==0) break;//处理结束
     }
+
+    //Machinec
+    while(steps<100) progress->setValue(++steps);
+    progress->close();
+    delete progress;
+    //Machinec
 
     //关闭文件
     fclose(fin);

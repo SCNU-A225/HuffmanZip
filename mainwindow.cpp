@@ -219,8 +219,10 @@ void MainWindow::on_btnComsure_clicked()
     }
 
     //todo: 进度条
-    const char* srcPath = chose.toStdString().c_str();//源文件
-    const char* dstPath = aim.toStdString().c_str();//目标文件路径
+    std::string ta = chose.toStdString();
+    std::string tb = aim.toStdString();
+    const char* srcPath = ta.c_str();//源文件
+    const char* dstPath = tb.c_str();//目标文件路径
     try {
         ZIP::encode(srcPath, dstPath);
     } catch(std::runtime_error er) {
@@ -263,8 +265,10 @@ void MainWindow::on_btnUnSure_clicked()
         if(message.exec() == QMessageBox::No) return;
     }
 
-    const char* zipPath = chose.toStdString().c_str();//压缩文件路径
-    const char* dstPath = path.toStdString().c_str();;//目标文件夹
+    std::string ta = chose.toStdString();
+    std::string tb = path.toStdString();
+    const char* zipPath = ta.c_str();//压缩文件路径
+    const char* dstPath = tb.c_str();;//目标文件夹
 
     try{
         ZIP::decode(zipPath,dstPath);
