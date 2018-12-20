@@ -69,14 +69,19 @@ void ZIP::encode(const char* srcPath, const char* dstPath, QProgressDialog* prog
     while (true) {
         c = fgetc(fin);
         if(feof(fin)) break;
+
+        //防止界面假死
         if((++circleTimes&65535)==65535)
             QCoreApplication::processEvents();
+        //更新进度条
         if(circleTimes==each)
         {
             QCoreApplication::processEvents();
             circleTimes = 0;
             progress->setValue(++steps);
         }
+
+        //统计字符出现
         weights[c]++;
     }
     HuffmanTree tree(weights);
@@ -110,6 +115,8 @@ void ZIP::encode(const char* srcPath, const char* dstPath, QProgressDialog* prog
                 //将压缩后的数据写入
                 fputc(temp,fout);
             }
+
+            //防止界面假死，更新进度条
             if((++circleTimes&65535)==65535)
                 QCoreApplication::processEvents();
             if(circleTimes==each)
@@ -137,6 +144,7 @@ void ZIP::encode(const char* srcPath, const char* dstPath, QProgressDialog* prog
     fclose(fin);
     fclose(fout);
 
+    //进度条补全
     for(; steps<=100; steps++) progress->setValue(steps);
 
     //释放内存
@@ -211,7 +219,6 @@ void ZIP::decode(const char* zipPath, const char* dstPath, QProgressDialog* prog
             if(now==nullptr) throw runtime_error("哈夫曼树解码失败！");
             if(now->data!=-1)
             {
-                //todo: 数据正确性判断
                 fputc(now->data,fout);//找到叶子节点，存入对应数据
                 now = root;
             }
@@ -232,8 +239,8 @@ void ZIP::decode(const char* zipPath, const char* dstPath, QProgressDialog* prog
                 else codeQueue.push_back('0');
             }
         }
-        QCoreApplication::processEvents();
-        progress->setValue(++steps);
+        QCoreApplication::processEvents();//防止界面假死
+        progress->setValue(++steps);//更新进度条
 
         if(feof(fin)&&codeQueue.size()==0) break;//处理结束
     }

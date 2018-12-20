@@ -221,7 +221,7 @@ void MainWindow::on_btnComsure_clicked()
         if(message.exec() == QMessageBox::No) return;
     }
 
-    //todo: 进度条
+    //进度条
     QProgressDialog* progress;
     progress = new QProgressDialog(this);;
     progress->setCancelButton(nullptr);
@@ -241,12 +241,11 @@ void MainWindow::on_btnComsure_clicked()
 
 
     try {
-        clock_t startTime,endTime;
+        clock_t startTime,endTime;//统计时间
         startTime = clock();
-        ZIP::encode(srcPath, dstPath,progress);
+        ZIP::encode(srcPath, dstPath,progress);//调用压缩方法
         endTime = clock();
         double time = double(endTime - startTime) / CLOCKS_PER_SEC;
-        qDebug()<<time;
         QMessageBox::information(this,"提示",QString("压缩成功！耗时：%1s").arg(time));
     } catch(std::runtime_error er) {
         qDebug()<<er.what();
@@ -294,6 +293,7 @@ void MainWindow::on_btnUnSure_clicked()
     const char* zipPath = ta.c_str();//压缩文件路径
     const char* dstPath = tb.c_str();;//目标文件夹
 
+    //进度条
     QProgressDialog* progress;
     progress = new QProgressDialog(this);;
     progress->setCancelButton(nullptr);
@@ -307,10 +307,9 @@ void MainWindow::on_btnUnSure_clicked()
                               "QProgressBar::chunk{background-color: #CD96CD;width: 10px;margin: 0.5px;}");
 
     try{
-        clock_t startTime,endTime;
+        clock_t startTime,endTime;//统计时间
         startTime = clock();
-        ZIP::decode(zipPath,dstPath,progress);
-        endTime = clock();
+        ZIP::decode(zipPath,dstPath,progress);//调用解压方法
         double time = double(endTime - startTime) / CLOCKS_PER_SEC;
         qDebug()<<time;
         QMessageBox::information(this,"提示",QString("解压成功！耗时：%1s").arg(time));
