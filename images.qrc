@@ -4,5 +4,7 @@
         <file>btn2.png</file>
         <file>btn3.png</file>
         <file>bg4.jpg</file>
+        <file>myicon.png</file>
+        <file>myapp.ico</file>
     </qresource>
 </RCC>

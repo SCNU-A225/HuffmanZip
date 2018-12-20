@@ -44,3 +44,5 @@ DISTFILES += \
     background.jpg \
     background.jpg \
     bg2.jpeg
+
+RC_FILE = appicon.rc

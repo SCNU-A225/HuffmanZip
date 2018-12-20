@@ -12,6 +12,9 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
+    //设置窗口图标
+    setWindowIcon(QIcon(QStringLiteral(":/new/prefix1/myicon.png")));
+
     ui->setupUi(this);
     ui->stackedWidget->setCurrentIndex(0);
     //Line Edit样式（QSS样式表）
