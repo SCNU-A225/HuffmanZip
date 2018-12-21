@@ -178,7 +178,8 @@ void MainWindow::on_btnUnChose_clicked()
         filename = fileDialog->selectedFiles().first();
         ui->leUnChose->setText(filename);
         ui->leUnAim->setText(fileDialog->directory().absolutePath());
-        const char* path = filename.toStdString().c_str();
+        std::string tPath = filename.toStdString();
+        const char* path = tPath.c_str();
         try {
             ui->leUnname->setText(QString(ZIP::getZipFileName(path)));
         } catch (std::runtime_error er) {
@@ -313,6 +314,7 @@ void MainWindow::on_btnUnSure_clicked()
         clock_t startTime,endTime;//统计时间
         startTime = clock();
         ZIP::decode(zipPath,dstPath,progress);//调用解压方法
+        endTime = clock();
         double time = double(endTime - startTime) / CLOCKS_PER_SEC;
         qDebug()<<time;
         QMessageBox::information(this,"提示",QString("解压成功！耗时：%1s").arg(time));
